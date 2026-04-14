@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import Card, { CardBody } from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import EmptyState from '../../components/ui/EmptyState';
-import { getAllAppointments } from '../../services/firestoreService';
+import Button from '../../components/ui/Button';
+import { getAllAppointments, confirmAppointment, cancelAppointment, completeAppointment } from '../../services/firestoreService';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 
 const ManageAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
   const [filters, setFilters] = useState({
     status: '',
     doctorName: '',
@@ -27,6 +29,44 @@ const ManageAppointments = () => {
       console.error('Error fetching appointments:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConfirm = async (appointmentId) => {
+    setActionLoading(appointmentId);
+    try {
+      await confirmAppointment(appointmentId);
+      fetchAppointments();
+    } catch (error) {
+      console.error('Error confirming appointment:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCancel = async (appointmentId) => {
+    if (window.confirm('Are you sure you want to cancel this appointment?')) {
+      setActionLoading(appointmentId);
+      try {
+        await cancelAppointment(appointmentId);
+        fetchAppointments();
+      } catch (error) {
+        console.error('Error cancelling appointment:', error);
+      } finally {
+        setActionLoading(null);
+      }
+    }
+  };
+
+  const handleComplete = async (appointmentId) => {
+    setActionLoading(appointmentId);
+    try {
+      await completeAppointment(appointmentId);
+      fetchAppointments();
+    } catch (error) {
+      console.error('Error completing appointment:', error);
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -127,6 +167,56 @@ const ManageAppointments = () => {
 
                 <div className="mt-4 text-xs text-gray-400">
                   Created: {appointment.createdAt?.toDate?.()?.toLocaleString() || 'N/A'}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {appointment.status === 'pending' && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="success"
+                        onClick={() => handleConfirm(appointment.id)}
+                        disabled={actionLoading === appointment.id}
+                      >
+                        {actionLoading === appointment.id ? 'Processing...' : 'Confirm'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleCancel(appointment.id)}
+                        disabled={actionLoading === appointment.id}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  )}
+                  {appointment.status === 'confirmed' && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => handleComplete(appointment.id)}
+                        disabled={actionLoading === appointment.id}
+                      >
+                        {actionLoading === appointment.id ? 'Processing...' : 'Mark Complete'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleCancel(appointment.id)}
+                        disabled={actionLoading === appointment.id}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  )}
+                  {appointment.status === 'completed' && (
+                    <span className="text-sm text-green-600 font-medium">✓ Completed</span>
+                  )}
+                  {appointment.status === 'cancelled' && (
+                    <span className="text-sm text-red-600 font-medium">✕ Cancelled</span>
+                  )}
                 </div>
               </CardBody>
             </Card>

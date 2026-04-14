@@ -12,6 +12,8 @@ import {
   subscribeToAppointments,
   subscribeToDoctorAppointments,
 } from './firestoreService';
+import { query, where, collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase/config';
 
 // Re-export all appointment functions
 export {
@@ -79,4 +81,27 @@ export const getStatusBgColor = (status) => {
     cancelled: 'bg-danger-50',
   };
   return colorMap[status] || 'bg-gray-50';
+};
+
+/**
+ * Check for duplicate appointments
+ * @param {string} userEmail - User's email address
+ * @param {string} doctorName - Doctor's name
+ * @param {string} date - Appointment date
+ * @returns {Promise<boolean>} True if duplicate exists
+ */
+export const checkDuplicateAppointment = async (userEmail, doctorName, date) => {
+  try {
+    const q = query(
+      collection(db, "appointments"),
+      where("userEmail", "==", userEmail),
+      where("doctorName", "==", doctorName),
+      where("date", "==", date)
+    );
+    const snapshot = await getDocs(q);
+    return !snapshot.empty;
+  } catch (error) {
+    console.error('Error checking duplicate appointment:', error);
+    return false;
+  }
 };

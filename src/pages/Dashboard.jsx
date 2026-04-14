@@ -8,7 +8,9 @@ import Card, { CardBody } from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
+import StatsCard from "../components/ui/StatsCard";
 import { formatAppointmentDate } from "../services/appointmentService";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 function Dashboard() {
   const [appointments, setAppointments] = useState([]);
@@ -79,6 +81,42 @@ function Dashboard() {
     cancelled: appointments.filter((a) => a.status === "cancelled").length,
   };
 
+  // Merge confirmed with completed for display
+  const completedCount = stats.completed + stats.confirmed;
+
+  // Chart data
+  const chartData = [
+    { name: "Pending", value: stats.pending, color: "#f59e0b" },
+    { name: "Confirmed", value: stats.confirmed, color: "#10b981" },
+    { name: "Completed", value: stats.completed, color: "#3b82f6" },
+    { name: "Cancelled", value: stats.cancelled, color: "#ef4444" },
+  ];
+
+  // Icon components for stats cards
+  const TotalIcon = () => (
+    <svg className="w-6 h-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+      <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+    </svg>
+  );
+
+  const PendingIcon = () => (
+    <svg className="w-6 h-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+      <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+
+  const CompletedIcon = () => (
+    <svg className="w-6 h-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+
+  const CancelledIcon = () => (
+    <svg className="w-6 h-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+      <path d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -100,28 +138,49 @@ function Dashboard() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <p className="text-sm text-gray-500">Total</p>
-          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-        </div>
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <p className="text-sm text-gray-500">Pending</p>
-          <p className="text-2xl font-bold text-warning-600">{stats.pending}</p>
-        </div>
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <p className="text-sm text-gray-500">Confirmed</p>
-          <p className="text-2xl font-bold text-success-600">{stats.confirmed}</p>
-        </div>
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <p className="text-sm text-gray-500">Completed</p>
-          <p className="text-2xl font-bold text-primary-600">{stats.completed}</p>
-        </div>
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <p className="text-sm text-gray-500">Cancelled</p>
-          <p className="text-2xl font-bold text-danger-600">{stats.cancelled}</p>
-        </div>
+      {/* Enhanced Stats Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard
+          title="Total Appointments"
+          value={stats.total}
+          color="primary"
+          icon={<TotalIcon />}
+        />
+        <StatsCard
+          title="Pending"
+          value={stats.pending}
+          color="warning"
+          icon={<PendingIcon />}
+        />
+        <StatsCard
+          title="Completed"
+          value={completedCount}
+          color="success"
+          icon={<CompletedIcon />}
+        />
+        <StatsCard
+          title="Cancelled"
+          value={stats.cancelled}
+          color="danger"
+          icon={<CancelledIcon />}
+        />
+      </div>
+
+      {/* Chart Section */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Appointment Overview</h3>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={chartData}>
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       {/* Filters */}
