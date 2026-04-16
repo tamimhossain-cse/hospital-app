@@ -29,7 +29,9 @@ const RoleProtectedRoute = ({
 
   // Not authenticated
   if (!user) {
-    return <Navigate to="/login" replace />;
+    // Check if this is an admin route - redirect to admin login
+    const isAdminRoute = allowedRoles.includes('admin');
+    return <Navigate to={isAdminRoute ? '/admin/login' : '/login'} replace />;
   }
 
   // User is blocked

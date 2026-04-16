@@ -32,14 +32,27 @@ export const createUserProfile = async (userData) => {
 
 export const getUserProfile = async (uid) => {
   try {
-    const q = query(collection(db, 'users'), where('uid', '==', uid));
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) return null;
-    const doc = querySnapshot.docs[0];
-    return { id: doc.id, ...doc.data() };
+    // First try to find by uid
+    let q = query(collection(db, 'users'), where('uid', '==', uid));
+    let querySnapshot = await getDocs(q);
+
+    // If not found by uid, the user document might be using the document ID as uid
+    if (querySnapshot.empty) {
+      // Try to get the document directly using uid as document ID
+      const docRef = doc(db, 'users', uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() };
+      }
+    } else {
+      const doc = querySnapshot.docs[0];
+      return { id: doc.id, ...doc.data() };
+    }
+
+    return null;
   } catch (error) {
     console.error('Error getting user profile:', error);
-    throw error;
+    return null;
   }
 };
 

@@ -19,6 +19,7 @@ function DoctorDetails() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
   const [notes, setNotes] = useState("");
   const [booking, setBooking] = useState(false);
   const [error, setError] = useState("");
@@ -55,6 +56,11 @@ function DoctorDetails() {
       return;
     }
 
+    if (!time) {
+      setError("Please select a time for your appointment.");
+      return;
+    }
+
     if (!isValidAppointmentDate(date)) {
       setError("Please select a future date for your appointment.");
       return;
@@ -81,7 +87,9 @@ function DoctorDetails() {
         doctorName: doctor.name,
         specialty: doctor.specialty,
         date: date,
+        time: time,
         userEmail: user.email,
+        userId: user.uid,
         status: "pending",
         notes: notes.trim(),
         createdAt: new Date(),
@@ -94,6 +102,7 @@ function DoctorDetails() {
       setTimeout(() => {
         setModalOpen(false);
         setDate("");
+        setTime("");
         setNotes("");
         setSuccessMessage("");
         navigate("/dashboard");
@@ -109,6 +118,7 @@ function DoctorDetails() {
   const handleCloseModal = () => {
     setModalOpen(false);
     setDate("");
+    setTime("");
     setNotes("");
     setError("");
     setSuccessMessage("");
@@ -188,14 +198,21 @@ function DoctorDetails() {
             </div>
           ) : (
             <>
-              <Input
-                label="Appointment Date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                error={error}
-                min={new Date().toISOString().split('T')[0]}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Appointment Date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+                <Input
+                  label="Appointment Time"
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
